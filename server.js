@@ -32,7 +32,12 @@ async function extractBusinessData(filePath) {
 
     reader.parseFileItems(filePath, (err, item) => {
       if (err) return reject(new Error(`PDF parsing failed: ${err.message}`))
-      if (!item) return resolve(businesses)
+      if (!item) {
+        if (currentBusiness.id) {
+          businesses.push(currentBusiness)
+        } //If there's a non-empty value in currentBusiness at the end of loop, push to businesses array
+        return resolve(businesses)
+      }
 
       if (!item.text || item.text.trim() === '') return // Skip empty items
 
@@ -78,6 +83,8 @@ app.get('/api/businesses/:page', async (req, res) => {
   try {
     const businesses = await extractBusinessData('may-2025.pdf')
     const result = paginateBusinesses(businesses, parseInt(page))
+    console.log(businesses[0], businesses[businesses.length - 1])
+
     res.json({ data: result, total: businesses.length })
   } catch (error) {
     console.error('🔥 Error:', error.message)
