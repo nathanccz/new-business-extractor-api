@@ -76,6 +76,16 @@ function paginateBusinesses(businesses, page) {
   return businesses.slice(startIndex, endIndex)
 }
 
+app.get('/api/businesses/', async (req, res) => {
+  try {
+    const businesses = await extractBusinessData('may-2025.pdf')
+    res.json({ data: businesses, total: businesses.length })
+  } catch (error) {
+    console.error('🔥 Error:', error.message)
+    res.status(500).json({ error: 'Failed to extract business data.' })
+  }
+})
+
 // API Endpoint
 app.get('/api/businesses/:page', async (req, res) => {
   const { page } = req.params
