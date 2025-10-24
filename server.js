@@ -76,6 +76,34 @@ function paginateBusinesses(businesses, page) {
   return businesses.slice(startIndex, endIndex)
 }
 
+function findTopCities(businesses) {
+  const hash = {}
+
+  for (const business of businesses) {
+    const formatted = formatCityName(business.city)
+    hash[formatted] = hash[formatted] + 1 || 1
+  }
+
+  const sorted = Object.entries(hash).sort((a, b) => b[1] - a[1])
+  const topTen = sorted.slice(1, 11)
+
+  return topTen.map(([city, count]) => ({ city, count }))
+}
+
+function formatCityName(city) {
+  return city
+    .split(' ')
+    .map((part) => part[0] + part.substring(1).toLowerCase())
+    .join(' ')
+}
+
+app.get('/api/businesses/trending', async (req, res) => {
+  const businesses = await extractBusinessData('may-2025.pdf')
+  const trending = findTopCities(businesses)
+
+  res.json(trending)
+})
+
 app.get('/api/businesses/', async (req, res) => {
   try {
     const businesses = await extractBusinessData('may-2025.pdf')
