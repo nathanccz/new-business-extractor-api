@@ -41,7 +41,14 @@ async function extractBusinessData(filePath) {
 
       if (!item.text || item.text.trim() === '') return // Skip empty items
 
+      if (item.text.length === 1) {
+        //Fix for PDF structure error where the parser counts the last character in an item as separate
+        currentBusiness[Object.keys(currentBusiness).length - 1] += item.text
+        return
+      }
+
       if (item.text) {
+        console.log(item.text)
         const textParts = item.text.split(' ')
         processTextParts(textParts)
       }
@@ -58,7 +65,7 @@ async function extractBusinessData(filePath) {
         isNewBusiness = false
       }
 
-      if (BUSINESS_ID_REGEX.test(parts[0])) {
+      if (BUSINESS_ID_REGEX.test(parts[0]) || parts[0].endsWith('-')) {
         isNewBusiness = true
         currentBusiness.id = parts[0]
       }
@@ -98,7 +105,7 @@ function formatCityName(city) {
 }
 
 app.get('/api/businesses/trending', async (req, res) => {
-  const businesses = await extractBusinessData('may-2025.pdf')
+  const businesses = await extractBusinessData('september-2025.pdf')
   const trending = findTopCities(businesses)
 
   res.json(trending)
@@ -106,7 +113,7 @@ app.get('/api/businesses/trending', async (req, res) => {
 
 app.get('/api/businesses/', async (req, res) => {
   try {
-    const businesses = await extractBusinessData('may-2025.pdf')
+    const businesses = await extractBusinessData('september-2025.pdf')
     res.json({ data: businesses, total: businesses.length })
   } catch (error) {
     console.error('🔥 Error:', error.message)
@@ -119,7 +126,7 @@ app.get('/api/businesses/:page', async (req, res) => {
   const { page } = req.params
   console.log(`Received request for page: ${page}`)
   try {
-    const businesses = await extractBusinessData('may-2025.pdf')
+    const businesses = await extractBusinessData('september-2025.pdf')
     const result = paginateBusinesses(businesses, parseInt(page))
     console.log(businesses[0], businesses[businesses.length - 1])
 
