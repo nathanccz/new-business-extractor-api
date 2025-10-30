@@ -51,7 +51,7 @@ async function extractBusinessData(filePath) {
       }
 
       if (item.text) {
-        console.log(item.text)
+        // console.log(item.text)
         const textParts = item.text.split(' ')
         processTextParts(textParts)
       }
@@ -81,8 +81,9 @@ function formatField(value) {
 }
 
 function paginateBusinesses(businesses, page) {
-  const startIndex = (page - 1) * 50
-  const endIndex = startIndex + 50
+  const startIndex = (page - 1) * 100
+  const endIndex = startIndex + 100
+
   return businesses.slice(startIndex, endIndex)
 }
 
@@ -131,6 +132,7 @@ app.get('/api/businesses/:page', async (req, res) => {
   try {
     const businesses = await extractBusinessData('may-2025.pdf')
     const result = paginateBusinesses(businesses, parseInt(page))
+    console.log('result length', result.length)
     console.log(businesses[0], businesses[businesses.length - 1])
 
     res.json({ data: result, total: businesses.length })
