@@ -125,6 +125,22 @@ app.get('/api/businesses/', async (req, res) => {
   }
 })
 
+app.get('/api/businesses/city/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    console.log(name)
+    const businesses = await extractBusinessData('may-2025.pdf')
+    const filtered = businesses.filter(
+      (business) => business.city.toLowerCase() === name.toLowerCase()
+    )
+
+    res.json({ data: filtered, total: filtered.length })
+  } catch (error) {
+    console.error('🔥 Error:', error.message)
+    res.status(500).json({ error: 'Failed to extract business data.' })
+  }
+})
+
 // API Endpoint
 app.get('/api/businesses/:page', async (req, res) => {
   const { page } = req.params
