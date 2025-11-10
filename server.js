@@ -148,10 +148,13 @@ app.get('/api/businesses/:page', async (req, res) => {
   try {
     const businesses = await extractBusinessData('may-2025.pdf')
     const result = paginateBusinesses(businesses, parseInt(page))
-    console.log('result length', result.length)
-    console.log(businesses[0], businesses[businesses.length - 1])
+    const cities = businesses
+      .map((business) => business.city)
+      .filter((city, ind, arr) => arr.lastIndexOf(city) === ind)
+      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+      .sort()
 
-    res.json({ data: result, total: businesses.length })
+    res.json({ data: result, cities: cities, total: businesses.length })
   } catch (error) {
     console.error('🔥 Error:', error.message)
     res.status(500).json({ error: 'Failed to extract business data.' })
