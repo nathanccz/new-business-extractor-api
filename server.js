@@ -141,6 +141,21 @@ app.get('/api/businesses/city/:name', async (req, res) => {
   }
 })
 
+app.get('/api/businesses/zip/:zipCode', async (req, res) => {
+  try {
+    const { zipCode } = req.params
+    const businesses = await extractBusinessData('may-2025.pdf')
+    const filtered = businesses.filter((business) =>
+      business.zipCode.startsWith(zipCode)
+    )
+
+    res.json({ data: filtered })
+  } catch (error) {
+    console.error('🔥 Error:', error.message)
+    res.status(500).json({ error: 'Failed to extract business data.' })
+  }
+})
+
 // API Endpoint
 app.get('/api/businesses/:page', async (req, res) => {
   const { page } = req.params
@@ -151,7 +166,14 @@ app.get('/api/businesses/:page', async (req, res) => {
     const cities = businesses
       .map((business) => business.city)
       .filter((city, ind, arr) => arr.lastIndexOf(city) === ind)
-      .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+      .map((city) =>
+        city
+          .split(' ')
+          .map(
+            (part) => part[0].toUpperCase() + part.substring(1).toLowerCase()
+          )
+          .join(' ')
+      )
       .sort()
 
     res.json({ data: result, cities: cities, total: businesses.length })
