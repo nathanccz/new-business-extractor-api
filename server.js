@@ -1,6 +1,7 @@
 import { PdfReader } from 'pdfreader'
 import express from 'express'
 import cors from 'cors'
+import fs from 'fs/promises'
 const app = express()
 const PORT = process.env.PORT || 3000
 
@@ -108,8 +109,37 @@ function formatCityName(city) {
     .join(' ')
 }
 
+async function saveJsonToFile(data, filename) {
+  try {
+    const jsonString = JSON.stringify(data, null, 2)
+    await fs.writeFile(filename, jsonString)
+    console.log(`JSON saved to ${filename}`)
+  } catch (error) {
+    console.log('error saving to file', error)
+  }
+}
+
+const checkFileExists = async (filepath) => {
+  try {
+    await fs.access(filepath)
+    return true
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return false
+    }
+    throw error
+  }
+}
+
 app.get('/api/businesses/trending', async (req, res) => {
-  const businesses = await extractBusinessData('may-2025.pdf')
+  let businesses
+
+  if (await checkFileExists('may-2025.json')) {
+    const file = await fs.readFile('./data/may-2025.json', 'utf8')
+    businesses = JSON.parse(file)
+  } else {
+    businesses = await extractBusinessData('may-2025.pdf')
+  }
   const trending = findTopCities(businesses)
 
   res.json(trending)
@@ -117,7 +147,15 @@ app.get('/api/businesses/trending', async (req, res) => {
 
 app.get('/api/businesses/', async (req, res) => {
   try {
-    const businesses = await extractBusinessData('may-2025.pdf')
+    let businesses
+
+    if (await checkFileExists('may-2025.json')) {
+      businesses = await fs.readFile('./data/may-2025.json', 'utf8')
+    } else {
+      businesses = await extractBusinessData('may-2025.pdf')
+    }
+
+    // await saveJsonToFile(businesses, './data/may-2025.json')
     res.json({ data: businesses, total: businesses.length })
   } catch (error) {
     console.error('🔥 Error:', error.message)
@@ -128,8 +166,14 @@ app.get('/api/businesses/', async (req, res) => {
 app.get('/api/businesses/city/:name', async (req, res) => {
   try {
     const { name } = req.params
-    console.log(name)
-    const businesses = await extractBusinessData('may-2025.pdf')
+    let businesses
+
+    if (await checkFileExists('may-2025.json')) {
+      const file = await fs.readFile('./data/may-2025.json', 'utf8')
+      businesses = JSON.parse(file)
+    } else {
+      businesses = await extractBusinessData('may-2025.pdf')
+    }
     const filtered = businesses.filter(
       (business) => business.city.toLowerCase() === name.toLowerCase()
     )
@@ -144,7 +188,14 @@ app.get('/api/businesses/city/:name', async (req, res) => {
 app.get('/api/businesses/zip/:zipCode', async (req, res) => {
   try {
     const { zipCode } = req.params
-    const businesses = await extractBusinessData('may-2025.pdf')
+    let businesses
+
+    if (await checkFileExists('may-2025.json')) {
+      const file = await fs.readFile('./data/may-2025.json', 'utf8')
+      businesses = JSON.parse(file)
+    } else {
+      businesses = await extractBusinessData('may-2025.pdf')
+    }
     const filtered = businesses.filter((business) =>
       business.zipCode.startsWith(zipCode)
     )
@@ -159,9 +210,16 @@ app.get('/api/businesses/zip/:zipCode', async (req, res) => {
 // API Endpoint
 app.get('/api/businesses/:page', async (req, res) => {
   const { page } = req.params
-  console.log(`Received request for page: ${page}`)
+
   try {
-    const businesses = await extractBusinessData('may-2025.pdf')
+    let businesses
+
+    if (await checkFileExists('may-2025.json')) {
+      const file = await fs.readFile('./data/may-2025.json', 'utf8')
+      businesses = JSON.parse(file)
+    } else {
+      businesses = await extractBusinessData('may-2025.pdf')
+    }
     const result = paginateBusinesses(businesses, parseInt(page))
     const cities = businesses
       .map((business) => business.city)
